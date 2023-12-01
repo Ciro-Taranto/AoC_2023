@@ -2,16 +2,10 @@
 import regex
 import re
 from pathlib import Path
-from time import perf_counter
-from contextlib import contextmanager
 
 import inflect
 
-@contextmanager
-def with_timing():
-    start = perf_counter()
-    yield None
-    print(f'Elapsed {perf_counter() - start:2.4f} seconds.')
+from aoc_utils import timing
 
 numbers = []
 with  open(Path(__file__).parent / 'input.txt', 'r') as fin: 
@@ -28,7 +22,7 @@ mapping = {str(val): str(val) for val in range(0,10)}
 words_mapping = {inflect.engine().number_to_words(val): str(val) for val in range(0, 10)}
 mapping = mapping | words_mapping
 pattern = regex.compile(r'\d|{}'.format("|".join(words_mapping)))
-with with_timing():
+with timing():
     with  open(Path(__file__).parent / 'input.txt', 'r') as fin: 
         for line in fin.readlines():
             vals = pattern.findall(line, overlapped=True)
@@ -48,7 +42,7 @@ def find_first_and_last(pattern: re.Pattern, string: str) -> tuple[str, str]:
 
 numbers = []
 pattern = re.compile(r'\d|{}'.format("|".join(words_mapping)))
-with with_timing():
+with timing():
     with  open(Path(__file__).parent / 'input.txt', 'r') as fin: 
         for line in fin.readlines():
             vals = find_first_and_last(pattern, line)
