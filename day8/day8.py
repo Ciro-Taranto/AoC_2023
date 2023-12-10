@@ -39,7 +39,7 @@ print(result)
 
 def part_two_naive(path: Path) -> int:
     # Spoiler: it will work only if you have a lot of time
-    # in my case ~4000h, so I would have the solution in about 6 months.
+    # in my case (best scenario) ~4000h, so I would have the solution in about 6 months.
     moves, nodes = parse_file(path)
     current_nodes = [node for node in nodes if node.endswith("A")]
     for i, move in tqdm(enumerate(cycle(moves))):
