@@ -166,7 +166,7 @@ def explore(extended_map: list[str]) -> set[tuple[int, int]]:
             next_node = (node[0] + move[0], node[1] + move[1])
             if 0 <= next_node[0] < n_lines and 0 <= next_node[1] < line_length:
                 char = extended_map[next_node[0]][next_node[1]]
-                if char != "x":
+                if char != "x" and next_node not in seen:
                     to_explore.append(next_node)
 
     return reachable_from_outside
