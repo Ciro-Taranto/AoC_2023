@@ -1,8 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
-from dataclasses import dataclass, astuple
+from dataclasses import dataclass
 from typing import Optional
-from tqdm import tqdm
 import sympy
 
 from aoc_utils import timing
@@ -52,8 +51,6 @@ def part_one(path: Path) -> int:
     lines = parse_file(path)
     minimum_intercept = 200000000000000
     maximum_intercept = 400000000000000
-    # minimum_intercept = 7
-    # maximum_intercept = 27
     intercepting = 0
     for i, line in enumerate(lines):
         for other_line in lines[:i]:
