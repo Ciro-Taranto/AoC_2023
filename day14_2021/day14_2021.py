@@ -73,6 +73,8 @@ def part_two(path: Path) -> int:
     counts[original_string[-1]] += 1
     counts[original_string[0]] += 1
     counts = {key: val // 2 for key, val in counts.items()}
+    print("Length of the native string that you would allocate:", sum(counts.values()))
+    print("GB of space", sum(counts.values()) * 4 / (1024 * 1024 * 1024))
     counts = sorted(counts.items(), key=lambda x: -x[1])
     return counts[0][1] - counts[-1][1]
 
