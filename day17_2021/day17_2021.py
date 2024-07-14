@@ -1,7 +1,7 @@
 from pathlib import Path
 from collections import defaultdict
 import re
-from itertools import product
+import math
 
 from aoc_utils import timing
 
@@ -12,16 +12,13 @@ def find_max_distance_coverable(speed: int) -> int:
 
 
 def find_minimal_x_speed_to_reach_target(target: int) -> int:
-    # TODO: Invert the gauss formula to obtain this analytically
-    speed = 1
-    distance_coverable = find_max_distance_coverable(speed)
-    while distance_coverable < target:
-        speed += 1
-        distance_coverable = find_max_distance_coverable(speed)
-    return speed
+    # Inversion of the gauss summation
+    return math.ceil((-1 + math.sqrt(1 + 8 * target)) / 2)
 
 
 def find_time_to_reach_target(speed: int, target: int) -> int:
+    # The distance covered after n steps could also be written as:
+    # d=v*n−n*(n−1)/2 ​
     position = 0
     steps = 0
     while position < target:
