@@ -3,7 +3,7 @@ from pathlib import Path
 from dataclasses import dataclass, astuple
 from aoc_utils import timing
 from typing import Callable
-from collections import Counter, defaultdict
+from collections import defaultdict
 from contextlib import contextmanager
 from time import perf_counter
 from itertools import product
@@ -29,7 +29,7 @@ class XYZ:
         return XYZ(self.x + other.x, self.y + other.y, self.z + other.z)
 
     def __neg__(self) -> XYZ:
-        return XYZ(*(-val for val in astuple(self)))
+        return XYZ(-self.x, -self.y, -self.z)
 
     def manhattan(self, other: XYZ):
         diff = self - other
@@ -94,18 +94,26 @@ class ScannerReadings:
             find_distances(readings)
             for readings in self.all_readings[: None if do_rotation else 1]
         ]
+        # This is for efficiency: most of the time was spent in the hashing!
+        self.all_distance_sets = [
+            set(distance.values()) for distance in self.all_distances
+        ]
 
     def convert_other_to_self(self, other: ScannerReadings) -> tuple[list[XYZ], XYZ]:
         my_reading = self.all_readings[0]
         my_distances = self.all_distances[0]
-        for i, other_distances in enumerate(other.all_distances):
-            overlap = count_overlap(my_distances, other_distances)
+        my_set = self.all_distance_sets[0]
+        for other_readings, other_distances, other_set in zip(
+            other.all_readings, other.all_distances, other.all_distance_sets
+        ):
+            # NOTE: we rely on the assumption that the distances are unique.
+            # This is not necessarily the case
+            overlap = len(my_set.intersection(other_set))
+            # 132 = 12 * 11 -> number of overlaps if there are at least 12 beacon in common
             if overlap >= 132:
                 matching_pairs = find_matching_pairs(my_distances, other_distances)
                 correspondences = find_correspondences(matching_pairs)
-                return convert_coordinates(
-                    my_reading, other.all_readings[i], correspondences
-                )
+                return convert_coordinates(my_reading, other_readings, correspondences)
         return None
 
     def merge(self, new_readings: set[XYZ]) -> ScannerReadings:
@@ -133,18 +141,12 @@ def find_matching_pairs(
     first: Distances, second: Distances
 ) -> list[tuple[tuple[int, int], tuple[int, int]]]:
     pairs = []
-    if len(set(second.values())) == len(second):
-        reverse = dict(zip(second.values(), second.keys()))
-        for k1, v1 in first.items():
-            if v1 in reverse:
-                pairs.append((k1, reverse[v1]))
-        return pairs
-    print("Fallback strategy")
-    # Fallback strategy for non unique
+    reverse = dict(zip(second.values(), second.keys()))
     for k1, v1 in first.items():
-        for k2, v2 in second.items():
-            if v1 == v2:
-                pairs.append((k1, k2))
+        if v1 in reverse:
+            pairs.append((k1, reverse[v1]))
+            # We truly do not need all the pairs, one is enough.
+            return pairs
     return pairs
 
 
@@ -173,24 +175,6 @@ def convert_coordinates(
     a1, a2 = next(iter(correspondences.items()))
     offset = first[a1] - second[a2]
     return [val + offset for val in second], offset
-
-
-def count_overlap(first_distances: Distances, second_distances: Distances) -> int:
-    if len(set(first_distances.values())) == len(first_distances) or len(
-        set(second_distances.values())
-    ) == len(second_distances):
-        return len(
-            set(first_distances.values()).intersection(set(second_distances.values()))
-        )
-    # If a distance is present twice in the left set, I want to count it twice,
-    # if it is present the same amount of times in the second set
-    print(f"Using fallback strategy")
-    c1 = Counter(first_distances.values())
-    c2 = Counter(second_distances.values())
-    overlap = 0
-    for key, val in c1.items():
-        overlap += min(val, c2.get(key, 0))
-    return overlap
 
 
 def explore(scanners: dict[str, list[XYZ]]) -> None:
