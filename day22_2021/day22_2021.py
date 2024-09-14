@@ -129,7 +129,6 @@ def parse_file(path: Path) -> list[Cuboid]:
 
 
 def part_one(path: Path) -> int:
-    return
     cuboids = parse_file(path)
     on_coordinates = set()
     for cuboid in cuboids:
@@ -145,8 +144,9 @@ print(result)
 
 
 def _find_first_overlap(
-    first_group: set[Cuboid], second_group: set[Cuboid]
+    first_group: set[Cuboid], second_group: set[Cuboid], seen: set[Cuboid]
 ) -> typing.Optional[tuple[Cuboid, Cuboid]]:
+    first_group = first_group.difference(seen)
     first_group = sorted(first_group, key=lambda x: x.x0)
     for first in first_group:
         second_group = [elem for elem in second_group if elem.x1 >= first.x0]
@@ -154,13 +154,13 @@ def _find_first_overlap(
         for second in second_group_filtered:
             if first.partially_overlaps(second):
                 return first, second
+        seen.add(first)
     return None
 
 
 def filter_cuboids_by_overlap(
     cuboid: Cuboid, others: typing.Sequence[Cuboid]
 ) -> list[Cuboid]:
-    # others = [other for other in others if other.x1 >= cuboid.x0]
     others = [other for other in others if other.x0 <= cuboid.x1]
     others = [other for other in others if other.y1 >= cuboid.y0]
     others = [other for other in others if other.y0 <= cuboid.y1]
@@ -172,7 +172,10 @@ def filter_cuboids_by_overlap(
 def split_in_overlapping_and_non_overlapping(
     first_splits: set[Cuboid], second_splits: set[Cuboid]
 ) -> tuple[set[Cuboid], set[Cuboid]]:
-    while (overlap := _find_first_overlap(first_splits, second_splits)) is not None:
+    seen = set()
+    while (
+        overlap := _find_first_overlap(first_splits, second_splits, seen)
+    ) is not None:
         first, second = overlap
         first_splits.remove(first)
         second_splits.remove(second)
@@ -236,8 +239,6 @@ def part_two(path: Path) -> int:
             else:
                 new_set.add(on_set_cuboid)
         on_set = new_set
-        if any(a.partially_overlaps(b) for a, b in product(cuboid_split, on_set)):
-            raise ValueError
         pbar.set_postfix(
             {
                 "cuboid split": len(cuboid_split),
@@ -256,7 +257,7 @@ def part_two(path: Path) -> int:
                     on_set.remove(cuboid_to_remove)
         else:
             raise ValueError("Status of cuboid either on or off.")
-    print(sum([c.volume() for c in on_set]))
+    return sum([c.volume() for c in on_set])
 
 
 with timing():
